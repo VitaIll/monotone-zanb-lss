@@ -1,0 +1,12 @@
+# third-party clone kept locally for reference only
+LightGBMLSS/
+
+# internal business strategy document (not part of the public method)
+strategy_zanb_lgbmlss.md
+
+__pycache__/
+*.pyc
+experiment/_run_log.txt
+experiment/_verify_log.txt
+experiment/figures/_preview/
+.claude/

@@ -1,0 +1,208 @@
+{
+  "gradient_check": {
+    "grad_a_max_rel_err": 3.321533738131261e-08,
+    "hess_a_max_rel_err": 4.165577547921433e-11,
+    "grad_b_max_rel_err": 9.47125240738739e-08,
+    "hess_b_max_rel_err": 3.5281482606560148e-09,
+    "mean_score_a_at_truth": 0.03524626706002931,
+    "mean_score_b_at_truth": 0.00622135562780289,
+    "se_score_a": 0.0207273901404662,
+    "se_score_b": 0.00668425312003439,
+    "score_identity_pass": true
+  },
+  "numclass_shared_constraint_demo": {
+    "max_increase_output0": 0.0,
+    "max_increase_output1": 0.0,
+    "rmse_output0_target_plus3x": 1.7289654121718205,
+    "rmse_output1_target_minus3x": 0.004212413533047603
+  },
+  "panel": {
+    "rows_train": 54000,
+    "rows_val": 7800,
+    "rows_test": 7200,
+    "zero_share_train": 0.3120925925925926,
+    "y_max": 305,
+    "unit_mean_volume_range": [
+      0.1111111111111111,
+      134.07777777777778
+    ]
+  },
+  "ztnb_trainer": {
+    "A": {
+      "c_a": 1.8780508489842846,
+      "c_b_log_theta0": 0.8779370154904519,
+      "best_iter_mu": 148,
+      "best_iter_theta": 27,
+      "z0_val_ztnb_nll": 2.1222390012400805,
+      "z1_val_ztnb_nll": 2.1154834120185355,
+      "z1_accepted": true,
+      "phase1_iters": 271
+    },
+    "B": {
+      "c_a": 1.8780508489842846,
+      "c_b_log_theta0": 0.8784224263598407,
+      "best_iter_mu": 162,
+      "best_iter_theta": 35,
+      "z0_val_ztnb_nll": 2.1229635523641983,
+      "z1_val_ztnb_nll": 2.1155882891861797,
+      "z1_accepted": true,
+      "phase1_iters": 277
+    },
+    "C": {
+      "c_a": 1.8780508489842846,
+      "c_b_log_theta0": 0.8784224263598407,
+      "best_iter_mu": 163,
+      "best_iter_theta": 36,
+      "z0_val_ztnb_nll": 2.1229635523641983,
+      "z1_val_ztnb_nll": 2.1151916017974837,
+      "z1_accepted": true,
+      "phase1_iters": 277
+    }
+  },
+  "fit_seconds": {
+    "A": 17.5,
+    "B": 18.7,
+    "C": 18.5
+  },
+  "violations": {
+    "A": {
+      "n_sweeps": 1200,
+      "sweeps_with_violation": 1199,
+      "violation_rate": 0.9991666666666666,
+      "max_violation": 1.932460190599059,
+      "median_violation_when_violated": 0.05344469978238742
+    },
+    "B": {
+      "n_sweeps": 1200,
+      "sweeps_with_violation": 1048,
+      "violation_rate": 0.8733333333333333,
+      "max_violation": 0.1364045123454476,
+      "median_violation_when_violated": 0.006085560882727492
+    },
+    "C": {
+      "n_sweeps": 1200,
+      "sweeps_with_violation": 0,
+      "violation_rate": 0.0,
+      "max_violation": 0.0,
+      "median_violation_when_violated": 0.0
+    },
+    "truth_DGP": {
+      "n_sweeps": 1200,
+      "sweeps_with_violation": 97,
+      "violation_rate": 0.08083333333333333,
+      "max_violation": 0.011941828005859634,
+      "median_violation_when_violated": 0.0025875569289544043
+    }
+  },
+  "quantile_violations_C": {
+    "0.5": 0,
+    "0.9": 0,
+    "0.99": 0
+  },
+  "violations_extended_grid": {
+    "A": {
+      "n_sweeps": 1200,
+      "sweeps_with_violation": 1155,
+      "violation_rate": 0.9625,
+      "max_violation": 1.894914432292346,
+      "median_violation_when_violated": 0.03622233950281484
+    },
+    "B": {
+      "n_sweeps": 1200,
+      "sweeps_with_violation": 869,
+      "violation_rate": 0.7241666666666666,
+      "max_violation": 0.1234342963059758,
+      "median_violation_when_violated": 0.005554468365557064
+    },
+    "C": {
+      "n_sweeps": 1200,
+      "sweeps_with_violation": 0,
+      "violation_rate": 0.0,
+      "max_violation": 0.0,
+      "median_violation_when_violated": 0.0
+    }
+  },
+  "test_metrics": {
+    "A": {
+      "test_nll": 1.9638783607931143,
+      "rmse_vs_y": 6.172848986617968,
+      "mae_vs_y": 2.564001954812149,
+      "rmse_vs_true_mean": 2.5320322655356406,
+      "rmsle_vs_true_mean": 0.14667536843677204,
+      "rmse_vs_true_mean_trap_units": 0.5051770514070105,
+      "corr_logit_pi": 0.9670107753648777,
+      "corr_log_mu": 0.9655664198315388,
+      "corr_log_theta": 0.6308254257171726,
+      "std_log_theta_hat": 0.2032905243240237
+    },
+    "B": {
+      "test_nll": 1.9673858281630972,
+      "rmse_vs_y": 6.086471585947368,
+      "mae_vs_y": 2.561952818452991,
+      "rmse_vs_true_mean": 2.28450376964247,
+      "rmsle_vs_true_mean": 0.14799022509032211,
+      "rmse_vs_true_mean_trap_units": 0.49190631540126883,
+      "corr_logit_pi": 0.950470076985801,
+      "corr_log_mu": 0.9606114075527541,
+      "corr_log_theta": 0.6541946169397134,
+      "std_log_theta_hat": 0.23741148102083168
+    },
+    "C": {
+      "test_nll": 1.9638186411894007,
+      "rmse_vs_y": 6.0899559909342935,
+      "mae_vs_y": 2.562121651764923,
+      "rmse_vs_true_mean": 2.269330161869109,
+      "rmsle_vs_true_mean": 0.14514500726144478,
+      "rmse_vs_true_mean_trap_units": 0.5073341137440769,
+      "corr_logit_pi": 0.9677679177827161,
+      "corr_log_mu": 0.9606683241891987,
+      "corr_log_theta": 0.6471921874294325,
+      "std_log_theta_hat": 0.23797723349482386
+    },
+    "oracle": {
+      "test_nll": 1.9303547476889462
+    }
+  },
+  "unit_elasticity_corr_with_truth": {
+    "A": 0.33536149134664783,
+    "B": 0.25549312226097465,
+    "C": 0.27950859263231015
+  },
+  "product_elasticity_corr_with_truth": {
+    "A": 0.5445868586483696,
+    "B": 0.32366415586383573,
+    "C": 0.4380405120352253
+  },
+  "pit_tier_uniformity_G5_C": {
+    "n_bins": 20,
+    "band": [
+      0.5,
+      1.5
+    ],
+    "tiers": {
+      "low-volume tier": {
+        "min_bin": 0.766666666666666,
+        "max_bin": 1.1750000000000016,
+        "pass": true
+      },
+      "mid-volume tier": {
+        "min_bin": 0.8249999999999993,
+        "max_bin": 1.2500000000000002,
+        "pass": true
+      },
+      "high-volume tier": {
+        "min_bin": 0.741666666666666,
+        "max_bin": 1.2500000000000018,
+        "pass": true
+      }
+    },
+    "pass": true
+  },
+  "binning_3000_products": {
+    "pct_products_5pct_shift_zero_edges_raw": 0.0,
+    "pct_products_5pct_shift_at_most_one_edge_raw": 1.0,
+    "median_edges_in_5pct_shift_raw": 2.0,
+    "edges_in_5pct_shift_ratio_feature": 77
+  },
+  "runtime_seconds_total": 59.7
+}

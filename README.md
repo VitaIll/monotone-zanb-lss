@@ -52,7 +52,8 @@ So the exact joint MLE decomposes into:
      move up). `mu` is monotone **−1** on price; the `theta` booster's feature set **excludes**
      price.
 
-All ZTNB derivatives are **analytic** (scipy; validated against finite differences to ~1e-9), so
+All ZTNB derivatives are **analytic** (scipy; validated against finite differences to ≤ 1e-7 for
+gradients and ≤ 4e-9 for hessians, with the score identity asserted within Monte-Carlo error), so
 no torch/autograd is needed at production scale. Means, CDFs, quantiles and randomized-PIT are
 closed-form.
 
@@ -96,10 +97,12 @@ LightGBMLSS + `monotone_constraints` would do), **C** per-parameter (ours).
 | recovery corr: gate / location / dispersion | 0.967 / 0.966 / 0.631 | 0.950 / 0.961 / 0.654 | **0.968 / 0.961 / 0.647** |
 | product-level elasticity corr with truth | 0.545 | 0.324 | 0.438 |
 
-\* B's violation rate is a hyperparameter lottery: under other capacity settings B shows 0%
-violations — but only because its gate booster stops splitting on price entirely (verified by a
-split census), i.e. "monotone" by deleting the price→occurrence channel and miscalibrating the
-zero-rate against price. Either failure mode, no guarantee.
+\* B's violation rate is a hyperparameter lottery. Its gate — constrained `−1` against a zero rate
+that truly *rises* with price — never splits on price under any setting tried (split census), so
+the price→occurrence channel is always deleted and the zero rate always miscalibrated. What swings
+between 87% and 0% violations is the *theta* booster: when it picks up the price–dispersion signal,
+zero-truncation pushes the conditional mean up with price; when it misses it, B's positive part
+coincides with C's and B is monotone only by accident. Either failure mode, no guarantee.
 
 The headline: **the guarantee is free.** C ties/beats the unconstrained model on NLL and beats it
 on oracle-mean RMSE/RMSLE — correctly-signed constraints act as regularisation, not a tax.
@@ -113,15 +116,16 @@ on oracle-mean RMSE/RMSLE — correctly-signed constraints act as regularisation
 [THEORY.md](THEORY.md) — it exits non-zero if any gate fails and writes
 `experiment/verification_report.json`:
 
-- **V0** analytic score/information vs finite differences (~1e-9); score identity at the truth.
+- **V0** analytic score/information vs finite differences (≤ 1e-7 / ≤ 4e-9); score identity at the truth.
 - **V1** distribution lemmas on dense grids over the full raw-score clip envelope (truncated-mean
   monotonicity, the `w(u) < 0` dispersion inequality, ZTNB FOSD, ZANB CDF ordering).
 - **V2** adversarial certification of LightGBM's constraint enforcement: 3 methods × capacities ×
   NaN contamination × native/custom objectives, sweeps to ±1e9 — max positive step **0.0**; plus
   the `num_class` single-vector demonstration.
-- **V3** per-instance audit of the fitted models: **every** test instance × 89-point grid incl.
-  out-of-support — mean, gate/location/dispersion channels, quantiles q10–q99, full-CDF dominance:
-  all **exactly 0.0**; plus a price-split census (informative monotone, no channel deletion).
+- **V3** per-instance audit of the fitted models on an 89-point grid incl. out-of-support: mean and
+  all three parameter channels on **every** test instance (7,200), quantiles q10–q99 on 1,500 and
+  full-CDF dominance on 400 randomly-drawn instances — max violating step **exactly 0.0**
+  everywhere; plus a price-split census (informative monotone, no channel deletion).
 - **V4a** flexibility/no-collapse on an *identifiable* DGP: the constrained class recovers
   pi/mu/theta surfaces (corr 0.97 / 0.99 / **0.95**), theta exactly price-flat.
 - **V4b** misspecified-panel conditional calibration: constrained *beats* unconstrained
@@ -134,7 +138,7 @@ on oracle-mean RMSE/RMSLE — correctly-signed constraints act as regularisation
   all ≥ 0; **absolute calibration achieved** (PIT max deviation 0.115, 80%-coverage 0.789),
   Z1 dispersion booster promoted on 6/6 seeds.
 
-**All 32 gates pass** (`experiment/verification_report.json`).
+**All 28 hard gates pass** (plus 4 recorded diagnostics; `experiment/verification_report.json`).
 
 ## Reproduce
 

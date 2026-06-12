@@ -158,7 +158,7 @@
     },
     "A": {
       "var_spearman": 0.9999999999999999,
-      "var_loglog_slope": 1.0061293090068566,
+      "var_loglog_slope": 1.0061293090068568,
       "pit_max_dev_by_tier": 0.21865376154861438
     },
     "note": "absolute miscalibration here is induced by unobservable heterogeneity in the DGP and affects A identically"

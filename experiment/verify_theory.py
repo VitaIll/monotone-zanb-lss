@@ -602,7 +602,11 @@ def main():
     v5_nan_contract()
     v6_no_power_loss_when_correctly_specified()
 
-    REPORT["summary"] = {"n_gates": sum(1 for k in REPORT if k.startswith("V")),
+    n_gates = sum(1 for v in REPORT.values()
+                  if isinstance(v, dict) and "pass" in v)
+    n_recorded = sum(1 for k in REPORT if k.startswith("V")) - n_gates
+    REPORT["summary"] = {"n_gates": n_gates,
+                         "n_recorded_diagnostics": n_recorded,
                          "failures": FAILURES}
     with open(os.path.join(HERE, "verification_report.json"), "w") as f:
         json.dump(REPORT, f, indent=2)
@@ -610,7 +614,7 @@ def main():
     if FAILURES:
         print("FAILED gates:", FAILURES)
         sys.exit(1)
-    print(f"ALL {REPORT['summary']['n_gates']} GATES PASS "
+    print(f"ALL {n_gates} HARD GATES PASS (+{n_recorded} recorded diagnostics) "
           f"-> verification_report.json")
 
 

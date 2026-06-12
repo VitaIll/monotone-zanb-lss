@@ -43,12 +43,17 @@ import sys
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 from scipy.stats import nbinom, spearmanr
 from scipy.special import expit
 from scipy.optimize import minimize_scalar
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+FIGDIR = os.path.join(HERE, "figures")
+os.makedirs(FIGDIR, exist_ok=True)
 
 from zanb_lss import (GateBooster, ZTNBCyclicBooster, ZANBModel,
                       log_p0, one_minus_p0, ztnb_logpmf, ztnb_mean, zanb_mean,
@@ -58,6 +63,7 @@ from run_experiment import simulate_panel, build_model, FEATS, TREAT
 
 REPORT = {}
 FAILURES = []
+FIGDATA = {}
 
 
 def gate(name, ok, detail):
@@ -346,6 +352,9 @@ def v4a_identifiable_recovery():
     c_th = float(np.corrcoef(np.log(thh), np.log(th[~itr]))[0, 1])
     s_th = float(np.std(np.log(thh)))
     REPORT["V4a.z1_accepted"] = bool(model.ztnb.z1_accepted)
+    sub = np.random.default_rng(3).choice(len(Xte), 4000, replace=False)
+    FIGDATA["v4a_theta"] = (np.log(th[~itr])[sub], np.log(thh)[sub], c_th,
+                            bool(model.ztnb.z1_accepted))
 
     gate("V4a.gate_surface_recovered", c_pi >= 0.90, {"corr_logit_pi": c_pi})
     gate("V4a.mu_surface_recovered", c_mu >= 0.90, {"corr_log_mu": c_mu})
@@ -400,6 +409,11 @@ def v4b_conditional_calibration():
                        "pit_max_dev_by_tier": pitdev}
         if kind == "C":
             modelC, piC, muC, thC = model, pi, mu, th
+            sub = np.random.default_rng(4).choice(len(te), 4000, replace=False)
+            c_th_panel = float(np.corrcoef(np.log(th), np.log(te.th_true.values))[0, 1])
+            FIGDATA["panel_theta"] = (np.log(te.th_true.values)[sub],
+                                      np.log(th)[sub], c_th_panel,
+                                      bool(model.ztnb.z1_accepted))
 
     gate("V4b.variance_rank_calibration_C", stats["C"]["var_spearman"] >= 0.95,
          {"spearman_decile_C": stats["C"]["var_spearman"]})
@@ -586,6 +600,72 @@ def v5_nan_contract():
 
 
 # ----------------------------------------------------------------------------
+# Evidence figures (rendered from the gate data; no extra fitting)
+# ----------------------------------------------------------------------------
+
+def render_figures():
+    plt.rcParams.update({"figure.dpi": 110, "savefig.dpi": 220, "font.size": 9.0,
+                         "axes.spines.top": False, "axes.spines.right": False,
+                         "axes.grid": True, "grid.alpha": 0.25,
+                         "figure.constrained_layout.use": True})
+
+    # f8: the shape channel is ADAPTIVE -- fully recovered when the truth is
+    # identifiable, conservatively shrunken (correctly ordered) when the panel
+    # is misspecified; in both cases promoted by the Z0->Z1 validation gate.
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.7))
+    panels = [("v4a_theta", "identifiable DGP (truth in the class):\n"
+                            "full shape recovery"),
+              ("panel_theta", "adversarial panel (misspecified):\n"
+                              "conservative, correctly-ordered shape")]
+    for ax, (key, title) in zip(axes, panels):
+        lt, lh, c, z1 = FIGDATA[key]
+        ax.scatter(lt, lh, s=4, alpha=0.18, color="#009E73", edgecolors="none")
+        lo, hi = float(min(lt.min(), lh.min())), float(max(lt.max(), lh.max()))
+        ax.plot([lo, hi], [lo, hi], "k--", lw=1.0, label="y = x")
+        ax.set_xlabel("true log theta")
+        ax.set_ylabel("fitted log theta")
+        ax.set_title(f"{title}\ncorr = {c:.2f}, Z1 promoted = {z1}", fontsize=9)
+        ax.legend(frameon=False, fontsize=7.5)
+    fig.suptitle("Dispersion (shape) adapts to the data when warranted "
+                 "-- and only through price-free features", y=1.07, fontsize=10.5)
+    fig.savefig(os.path.join(FIGDIR, "f8_shape_recovery.png"), bbox_inches="tight")
+    plt.close(fig)
+
+    # f9: no power loss under correct specification (V6 paired study)
+    per_seed = FIGDATA["v6"]
+    seeds = np.arange(1, len(per_seed) + 1)
+    d_nll = np.array([r["C"]["nll"] - r["A"]["nll"] for r in per_seed])
+    d_rmse = np.array([r["C"]["rmse_true_mean"] - r["A"]["rmse_true_mean"]
+                       for r in per_seed])
+    cov = np.array([r["C"]["cov80"] for r in per_seed])
+    pit = np.array([r["C"]["pit_max_dev"] for r in per_seed])
+    se = lambda x: float(np.std(x, ddof=1) / np.sqrt(len(x)))
+
+    fig, axes = plt.subplots(1, 3, figsize=(11.8, 3.3))
+    for ax, d, nm in [(axes[0], d_nll, "test NLL"), (axes[1], d_rmse,
+                      "RMSE vs true mean")]:
+        ax.bar(seeds, d, color=np.where(d <= 0, "#009E73", "#D55E00"), width=0.6)
+        ax.axhline(0, color="k", lw=1)
+        m, s = float(np.mean(d)), se(d)
+        ax.axhspan(m - 2 * s, m + 2 * s, color="#009E73", alpha=0.12)
+        ax.set_title(f"paired delta (C - A), {nm}\nmean {m:+.5f} +- {2*s:.5f} (2 SE)",
+                     fontsize=9)
+        ax.set_xlabel("seed #")
+    axes[2].plot(seeds, cov, "o-", color="#009E73", lw=1.4, label="80% coverage (C)")
+    axes[2].axhline(0.80, color="k", ls="--", lw=1)
+    axes[2].plot(seeds, pit, "s-", color="#56B4E9", lw=1.4,
+                 label="PIT max dev (C)")
+    axes[2].set_ylim(0, 1.0)
+    axes[2].set_xlabel("seed #")
+    axes[2].set_title("absolute calibration of the constrained\nmodel under correct specification",
+                      fontsize=9)
+    axes[2].legend(frameon=False, fontsize=7.5)
+    fig.suptitle("Correct specification: the constraint costs nothing "
+                 "(paired 6-seed study, identical capacity)", y=1.08, fontsize=10.5)
+    fig.savefig(os.path.join(FIGDIR, "f9_no_power_loss.png"), bbox_inches="tight")
+    plt.close(fig)
+    print(f"  figures written: f8_shape_recovery.png, f9_no_power_loss.png")
+
 
 def main():
     print("=" * 72)
@@ -601,6 +681,8 @@ def main():
     v4b_conditional_calibration()
     v5_nan_contract()
     v6_no_power_loss_when_correctly_specified()
+    FIGDATA["v6"] = REPORT["V6.per_seed"]
+    render_figures()
 
     n_gates = sum(1 for v in REPORT.values()
                   if isinstance(v, dict) and "pass" in v)

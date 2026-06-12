@@ -36,7 +36,7 @@ from scipy.special import expit
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from zanb_lss import (GateBooster, ZTNBCyclicBooster, ZANBModel,
                       zanb_mean, zanb_cdf, zanb_ppf, zanb_pit, ztnb_mean,
-                      ztnb_sample, check_gradients,
+                      ztnb_sample, check_gradients, check_quantiles,
                       numclass_shared_constraint_demo)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -271,8 +271,12 @@ def violation_stats(E):
 def main():
     t0 = time.time()
     results = {"gradient_check": check_gradients(),
+               "quantile_property_check": check_quantiles(),
                "numclass_shared_constraint_demo": numclass_shared_constraint_demo()}
-    print("[1/6] gradient + num_class checks done")
+    print("[1/6] gradient + quantile + num_class checks done "
+          f"(ppf vs brute-force pmf inversion: "
+          f"{results['quantile_property_check']['pairs_checked']} pairs, "
+          f"{results['quantile_property_check']['mismatches']} mismatches)")
 
     df = simulate_panel()
     feat_ok = df[FEATS].notna().all(axis=1)
@@ -492,25 +496,42 @@ def main():
     fig.savefig(os.path.join(FIGDIR, "f2_violation_audit.png"), bbox_inches="tight")
     plt.close(fig)
 
-    # F3: stochastic dominance for model C (gate-dominated unit)
+    # F3: stochastic dominance for model C (gate-dominated unit).
+    # NB the quantile fan of a DISCRETE hurdle law is genuinely a staircase:
+    # quantiles live on integers, the median pins at 1 while F(0) < 0.5, q25
+    # drops to 0 exactly where P(Y=0) crosses 25%, and the mean may sit below
+    # the integer median (zero atom + thin right tail). Verified against
+    # brute-force pmf inversion in check_quantiles().
     i3 = base.index.get_loc(picks[1][0])
     fig, axes = plt.subplots(1, 2, figsize=(9.8, 3.6))
-    qs = [0.95, 0.9, 0.75, 0.5, 0.25]
+    qs = [0.05, 0.25, 0.5, 0.75, 0.9, 0.95]
     piC_, muC_, thC_ = (params_sw["C"][j][i3] for j in range(3))
     fan = {q: np.array([zanb_ppf(q, np.array([piC_[g]]), np.array([muC_[g]]),
                                  np.array([thC_[g]]))[0] for g in range(len(LR_GRID))])
            for q in qs}
-    axes[0].fill_between(fmult, fan[0.25], fan[0.75], color=CLR["C"], alpha=0.18,
-                         label="quartiles")
-    axes[0].fill_between(fmult, fan[0.9], fan[0.95], color=CLR["C"], alpha=0.10)
-    for q, ls in [(0.95, ":"), (0.9, "--"), (0.5, "-")]:
-        axes[0].plot(fmult, fan[q], color=CLR["C"], ls=ls, lw=1.3, label=f"q{int(q*100)}")
+    axes[0].fill_between(fmult, fan[0.05], fan[0.95], color=CLR["C"], alpha=0.12,
+                         step="post", label="90% central interval (q05–q95)")
+    axes[0].fill_between(fmult, fan[0.25], fan[0.75], color=CLR["C"], alpha=0.30,
+                         step="post", label="50% central interval (q25–q75)")
+    for q, ls in [(0.95, ":"), (0.9, "--")]:
+        axes[0].plot(fmult, fan[q], color=CLR["C"], ls=ls, lw=1.1,
+                     drawstyle="steps-post", label=f"q{int(q * 100)}")
+    axes[0].plot(fmult, fan[0.5], color=CLR["C"], lw=1.7,
+                 drawstyle="steps-post", label="median")
     axes[0].plot(fmult, sweeps["C"][i3], color="k", lw=1.6, label="mean")
+    g25 = int(np.argmax(piC_ > 0.25))
+    if piC_[g25] > 0.25:
+        axes[0].axvline(fmult[g25], color="#888888", lw=0.9, ls=":")
+        axes[0].text(fmult[g25] + 0.008, 0.55 * float(fan[0.95].max()),
+                     "P(Y=0) crosses 25%:\nq25 drops to 0", fontsize=7.2,
+                     color="#555555")
     axes[0].set_xlabel("price multiplier")
     axes[0].set_ylabel("weekly units")
-    axes[0].set_title("Model C: every quantile non-increasing in price\n"
-                      "(first-order stochastic dominance)")
-    axes[0].legend(frameon=False, ncol=2)
+    axes[0].set_title("Model C: integer-quantile fan, nested central intervals\n"
+                      f"every quantile non-increasing; P(Y=0) rises "
+                      f"{piC_[0]:.2f}→{piC_[-1]:.2f} so the median pins at 1",
+                      fontsize=9.0)
+    axes[0].legend(frameon=False, ncol=2, fontsize=7.0)
 
     for f, c in [(0.75, "#1b7837"), (1.0, "#762a83"), (1.30, "#d73027")]:
         g = np.argmin(np.abs(fmult - f))

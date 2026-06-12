@@ -139,6 +139,12 @@ on oracle-mean RMSE/RMSLE — correctly-signed constraints act as regularisation
   Z1 dispersion booster promoted on 6/6 seeds.
 
 **All 28 hard gates pass** (plus 4 recorded diagnostics; `experiment/verification_report.json`).
+The suite also renders the two headline evidence figures: `f8_shape_recovery.png` (dispersion
+adapts — fully on the identifiable DGP, conservatively and correctly ordered on the misspecified
+panel) and `f9_no_power_loss.png` (the paired study with absolute-calibration panels).
+
+![shape recovery](experiment/figures/f8_shape_recovery.png)
+![no power loss](experiment/figures/f9_no_power_loss.png)
 
 ## Reproduce
 
@@ -157,16 +163,22 @@ experiment/run_experiment.py   adversarial panel, models A/B/C, audits, figures
 experiment/verify_theory.py    verification suite (exits non-zero on any gate failure)
 experiment/results.json        experiment metrics
 experiment/verification_report.json
-experiment/figures/            f1..f7
+experiment/figures/            f1..f7 (experiment), f8..f9 (verification suite)
+experiment/diagnose_theta.py   forensic script that isolated the degenerate-start hazard
+experiment/audit_quantiles.py  ad-hoc audit: closed-form quantiles vs brute-force pmf inversion
 ```
 
 ## References
 
-- Rigby & Stasinopoulos (2005), *GAMLSS*, JRSS-C.
+- Rigby & Stasinopoulos (2005), *GAMLSS*, JRSS-C — the RS cyclic-update algorithm our phase 2 mirrors.
+- Cameron & Trivedi (2013), *Regression Analysis of Count Data*, 2nd ed. — NB2 mean–dispersion
+  parameterisation and profile estimation of the dispersion (our Z0 phase is a boosted analogue).
 - Duan et al. (2020), *NGBoost*, ICML — per-parameter base learners.
 - März (2019), *XGBoostLSS*; März & Kneib (2022), *Distributional Gradient Boosting Machines* —
   the `num_class` mechanics this work forks.
-- Mayr et al. (2012); Thomas et al. (2018) — gamboostLSS cyclic updates.
-- `StatMixedML/LightGBMLSS` — the reference implementation studied.
+- Mayr et al. (2012); Thomas et al. (2018) — gamboostLSS cyclic updates and stabilisation heritage.
+- Shaked & Shanthikumar (2007), *Stochastic Orders* — MLR ⇒ FOSD (Thm 1.C.1), used by Lemma 2'.
+- `StatMixedML/LightGBMLSS` — the reference implementation studied (and the `zero_inflated.py`,
+  `model.py` behaviours cited in the strategy doc).
 
 MIT License.

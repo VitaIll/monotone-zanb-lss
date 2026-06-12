@@ -10,6 +10,10 @@
     "se_score_b": 0.00668425312003439,
     "score_identity_pass": true
   },
+  "quantile_property_check": {
+    "pairs_checked": 10500,
+    "mismatches": 0
+  },
   "numclass_shared_constraint_demo": {
     "max_increase_output0": 0.0,
     "max_increase_output1": 0.0,
@@ -60,9 +64,9 @@
     }
   },
   "fit_seconds": {
-    "A": 17.5,
-    "B": 18.7,
-    "C": 18.5
+    "A": 17.7,
+    "B": 18.8,
+    "C": 18.8
   },
   "violations": {
     "A": {
@@ -204,5 +208,5 @@
     "median_edges_in_5pct_shift_raw": 2.0,
     "edges_in_5pct_shift_ratio_feature": 77
   },
-  "runtime_seconds_total": 59.7
+  "runtime_seconds_total": 61.7
 }

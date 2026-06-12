@@ -177,6 +177,36 @@ def zanb_pit(rng, y, pi, mu, th):
     return Fy1 + rng.uniform(size=np.shape(y)) * (Fy - Fy1)
 
 
+def check_quantiles(seed=0, n_params=1500,
+                    qs=(0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99)):
+    """Property test: closed-form zanb_ppf == brute-force inversion of the
+    exact pmf (zero atom + cumulated ztnb_logpmf; independent of
+    scipy.nbinom.cdf/ppf). Asserts exact agreement on every pair."""
+    rng = np.random.default_rng(seed)
+    mismatches, checked = 0, 0
+    for _ in range(n_params):
+        pi = float(rng.uniform(0.01, 0.9))
+        mu = float(np.exp(rng.uniform(-2.5, 4.0)))
+        th = float(np.exp(rng.uniform(-2.0, 2.5)))
+        kmax, qmax = 4000, max(qs)
+        while True:                       # support long enough for the top q
+            ygrid = np.arange(1, kmax + 1, dtype=float)
+            cdf = pi + np.cumsum((1.0 - pi) * np.exp(ztnb_logpmf(ygrid, mu, th)))
+            if cdf[-1] >= qmax + 1e-12:
+                break
+            kmax *= 8
+        for q in qs:
+            a = float(zanb_ppf(q, np.array([pi]), np.array([mu]),
+                               np.array([th]))[0])
+            b = 0.0 if q <= pi else float(
+                ygrid[np.searchsorted(cdf, q, side="left")])
+            checked += 1
+            mismatches += int(a != b)
+    out = {"pairs_checked": checked, "mismatches": int(mismatches)}
+    assert mismatches == 0, "zanb_ppf disagrees with brute-force pmf inversion"
+    return out
+
+
 def ztnb_sample(rng, mu, th, max_tries=200):
     """Exact ZTNB sampling: NB2 = Poisson(Gamma(th, mu/th)) with zeros rejected."""
     mu = np.asarray(mu, dtype=float)

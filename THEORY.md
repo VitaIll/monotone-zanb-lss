@@ -214,10 +214,11 @@ the truth onto the class: the fitted model is the closest price-monotone distrib
 *requested* behaviour (the inductive bias overrides the data), and its cost is quantified on the
 adversarial panel (trap units) in `experiment/results.json`. Two corollaries verified in code:
 the fitted dispersion is *conditional* dispersion — under feature-insufficiency it absorbs
-unexplained location variance (can even invert against the structural `theta`; gate V4b attributes
-this with an oracle-location diagnostic and shows it hits the unconstrained model identically) —
-and conditional calibration of the constrained model matches the unconstrained one (relative gates,
-V4b).
+unexplained location variance (the per-unit theta-MLE correlation with the structural `theta` is
+positive given the *true* location and vanishes given the fitted one; gate V4b attributes this
+with an oracle-location diagnostic — a property of likelihood estimation itself, not of the
+constraints) — and conditional calibration of the constrained model is at least as good as the
+unconstrained one's on the same panel (relative gates, V4b: PIT-by-tier 0.164 vs 0.219).
 
 ---
 
@@ -256,7 +257,7 @@ and (E) — quality — which is why those are gated separately (V4, V6).
 | no channel deletion (informative monotone) | V3 census | constrained model: hundreds of price splits in gate & mu |
 | (F) recovery on identifiable DGP | V4a | corr(logit pi, log mu, log theta) ≈ 0.97 / 0.99 / 0.9; theta exactly price-flat; spread matched |
 | (F)/(E) conditional calibration parity | V4b | constrained >= unconstrained on variance-rank, slope, PIT-by-tier |
-| dispersion-absorbs-misfit attribution | V4b | theta-MLE corr vs truth: positive given true location, inverted given fitted — identical for unconstrained |
+| dispersion-absorbs-misfit attribution | V4b | per-unit theta-MLE corr vs structural theta: +0.19 given the true location, ≈0 (−0.01) given the fitted one — misfit absorption, not a trainer defect |
 | (A1b) hazard + safe encoding | V5 | hazard 0.03; safe encoding 0.0 |
 | (E) no power loss under correct spec | V6 | paired multi-seed: dNLL, dRMSE within 2 SE of 0 or better; PIT uniform; coverage 0.80 +- 0.02 |
 
